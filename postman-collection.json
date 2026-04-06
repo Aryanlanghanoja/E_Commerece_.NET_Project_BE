@@ -1,0 +1,753 @@
+{
+  "info": {
+    "name": "E-Commerce API",
+    "description": "Production-ready E-Commerce Backend API with Clean Architecture",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"SecurePassword123!\",\n    \"mobileNo\": \"+1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}", "auth", "register"]
+            },
+            "description": "Register a new user account"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}", "auth", "login"]
+            },
+            "description": "Authenticate user and receive JWT token"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": ["{{baseUrl}}", "auth", "forgot-password"]
+            },
+            "description": "Request password reset token"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"token\": \"your-reset-token\",\n    \"newPassword\": \"NewSecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": ["{{baseUrl}}", "auth", "reset-password"]
+            },
+            "description": "Reset password using token"
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email?token=your-verification-token",
+              "host": ["{{baseUrl}}", "auth", "verify-email"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "your-verification-token"
+                }
+              ]
+            },
+            "description": "Verify email address with token"
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}", "auth", "me"]
+            },
+            "description": "Get authenticated user profile"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": ["{{baseUrl}}", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories/1",
+              "host": ["{{baseUrl}}", "categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Home & Garden\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": ["{{baseUrl}}", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Electronics & Gadgets\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categories/1",
+              "host": ["{{baseUrl}}", "categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories/1",
+              "host": ["{{baseUrl}}", "categories", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?page=1&pageSize=20",
+              "host": ["{{baseUrl}}", "products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/1",
+              "host": ["{{baseUrl}}", "products", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Smartphone X Pro\",\n    \"categoryId\": 1,\n    \"description\": \"Professional edition smartphone\",\n    \"price\": 1299.99\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}", "products"]
+            }
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id\": 1,\n    \"name\": \"Smartphone X Pro Max\",\n    \"categoryId\": 1,\n    \"description\": \"Updated description\",\n    \"price\": 1399.99\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}", "products"]
+            }
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/1",
+              "host": ["{{baseUrl}}", "products", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Addresses",
+      "item": [
+        {
+          "name": "Get My Addresses",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addresses",
+              "host": ["{{baseUrl}}", "addresses"]
+            }
+          }
+        },
+        {
+          "name": "Create Address",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"line1\": \"456 Oak Avenue\",\n    \"city\": \"Los Angeles\",\n    \"state\": \"CA\",\n    \"pincode\": \"90001\",\n    \"country\": \"USA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/addresses",
+              "host": ["{{baseUrl}}", "addresses"]
+            }
+          }
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"line1\": \"789 Pine Street\",\n    \"city\": \"San Francisco\",\n    \"state\": \"CA\",\n    \"pincode\": \"94102\",\n    \"country\": \"USA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/addresses/1",
+              "host": ["{{baseUrl}}", "addresses", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/addresses/1",
+              "host": ["{{baseUrl}}", "addresses", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Get My Orders",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders?page=1&pageSize=20",
+              "host": ["{{baseUrl}}", "orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/1",
+              "host": ["{{baseUrl}}", "orders", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"addressId\": 1,\n    \"arrivingTime\": \"2026-04-10T14:00:00\",\n    \"items\": [\n        { \"productId\": 1, \"quantity\": 2 },\n        { \"productId\": 3, \"quantity\": 1 }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"Shipped\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/1/status",
+              "host": ["{{baseUrl}}", "orders", "1", "status"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/1/cancel",
+              "host": ["{{baseUrl}}", "orders", "1", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/1",
+              "host": ["{{baseUrl}}", "payments", "1"]
+            }
+          }
+        },
+        {
+          "name": "Initiate Payment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"orderId\": 1,\n    \"paymentMode\": \"UPI\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments",
+              "host": ["{{baseUrl}}", "payments"]
+            }
+          }
+        },
+        {
+          "name": "Update Payment Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/1/status?status=Success&transactionId=TXN123456",
+              "host": ["{{baseUrl}}", "payments", "1", "status"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Success"
+                },
+                {
+                  "key": "transactionId",
+                  "value": "TXN123456"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feedback",
+      "item": [
+        {
+          "name": "Get Product Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/feedback/product/1?page=1&pageSize=10",
+              "host": ["{{baseUrl}}", "feedback", "product", "1"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Average Rating",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/feedback/product/1/rating",
+              "host": ["{{baseUrl}}", "feedback", "product", "1", "rating"]
+            }
+          }
+        },
+        {
+          "name": "Submit Review",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"productId\": 1,\n    \"rating\": 5,\n    \"review\": \"Amazing product! Highly recommended.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/feedback",
+              "host": ["{{baseUrl}}", "feedback"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}", "health"]
+            }
+          }
+        },
+        {
+          "name": "Ping",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/ping",
+              "host": ["{{baseUrl}}", "health", "ping"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

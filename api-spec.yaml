@@ -1,0 +1,1205 @@
+openapi: 3.0.3
+info:
+  title: E-Commerce API
+  description: |
+    Production-ready E-Commerce Backend API with Clean Architecture.
+    
+    ## Features
+    - JWT Authentication
+    - Role-based Authorization
+    - Complete Order Management
+    - Product Catalog
+    - Payment Processing
+    - Review & Rating System
+    
+    ## Authentication
+    All endpoints except public ones require JWT Bearer token authentication.
+    Include the token in the Authorization header: `Bearer <token>`
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@yourdomain.com
+
+servers:
+  - url: https://api.yourdomain.com/api/v1
+    description: Production Server
+  - url: https://staging-api.yourdomain.com/api/v1
+    description: Staging Server
+  - url: http://localhost:5000/api
+    description: Development Server
+
+tags:
+  - name: Auth
+    description: Authentication and user management
+  - name: Categories
+    description: Product categories management
+  - name: Products
+    description: Product catalog operations
+  - name: Addresses
+    description: User address management
+  - name: Orders
+    description: Order processing and management
+  - name: Payments
+    description: Payment processing
+  - name: Feedback
+    description: Product reviews and ratings
+  - name: Health
+    description: API health checks
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      description: Creates a new user account and returns JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: user@example.com
+              password: SecurePassword123!
+              mobileNo: "+1234567890"
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: User login
+      description: Authenticates user and returns JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: user@example.com
+              password: SecurePassword123!
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request password reset
+      description: Sends password reset token to user email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Reset link sent if email exists
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password
+      description: Resets password using valid token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successful
+        '400':
+          description: Invalid or expired token
+
+  /auth/verify-email:
+    get:
+      tags: [Auth]
+      summary: Verify email address
+      description: Verifies user email using token from verification email
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Verification token
+      responses:
+        '200':
+          description: Email verified successfully
+        '400':
+          description: Invalid or expired token
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      description: Returns authenticated user's profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Get all categories
+      description: Returns list of all product categories
+      responses:
+        '200':
+          description: Categories retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CategoryResponse'
+    post:
+      tags: [Categories]
+      summary: Create category
+      description: Creates a new product category
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Category created
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /categories/{id}:
+    get:
+      tags: [Categories]
+      summary: Get category by ID
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Category found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CategoryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Categories]
+      summary: Update category
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '200':
+          description: Category updated
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Categories]
+      summary: Delete category
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Category deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /products:
+    get:
+      tags: [Products]
+      summary: Get products
+      description: Returns paginated list of products with optional filtering
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+          description: Filter by category ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Products retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PagedProductResponse'
+    post:
+      tags: [Products]
+      summary: Create product
+      description: Creates a new product
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: Product created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /products/{id}:
+    get:
+      tags: [Products]
+      summary: Get product by ID
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProductResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Products]
+      summary: Update product
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: Product updated
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Products]
+      summary: Delete product
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Product deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /addresses:
+    get:
+      tags: [Addresses]
+      summary: Get user addresses
+      description: Returns all addresses for authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Addresses retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AddressResponse'
+    post:
+      tags: [Addresses]
+      summary: Create address
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAddressRequest'
+      responses:
+        '201':
+          description: Address created
+
+  /addresses/{id}:
+    get:
+      tags: [Addresses]
+      summary: Get address by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Address found
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Addresses]
+      summary: Update address
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAddressRequest'
+      responses:
+        '200':
+          description: Address updated
+    delete:
+      tags: [Addresses]
+      summary: Delete address
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Address deleted
+
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Get user orders
+      description: Returns paginated list of orders for authenticated user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Orders retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PagedOrderResponse'
+    post:
+      tags: [Orders]
+      summary: Create order
+      description: Creates a new order with items
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/OrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Get order by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Order found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/OrderResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /orders/{id}/status:
+    patch:
+      tags: [Orders]
+      summary: Update order status
+      description: Updates order status (Admin/Vendor only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderStatusRequest'
+      responses:
+        '200':
+          description: Status updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /orders/{id}/cancel:
+    post:
+      tags: [Orders]
+      summary: Cancel order
+      description: Cancels a pending order
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Order cancelled
+        '400':
+          description: Cannot cancel non-pending order
+
+  /payments:
+    post:
+      tags: [Payments]
+      summary: Initiate payment
+      description: Creates a new payment for an order
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '200':
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentResponse'
+
+  /payments/{id}:
+    get:
+      tags: [Payments]
+      summary: Get payment by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Payment found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentResponse'
+    patch:
+      tags: [Payments]
+      summary: Update payment status
+      description: Updates payment status (Admin only)
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [Pending, Success, Failed]
+        - name: transactionId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment status updated
+
+  /feedback:
+    post:
+      tags: [Feedback]
+      summary: Submit review
+      description: Submits a product review
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFeedbackRequest'
+      responses:
+        '201':
+          description: Review submitted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FeedbackResponse'
+
+  /feedback/product/{productId}:
+    get:
+      tags: [Feedback]
+      summary: Get product reviews
+      description: Returns paginated reviews for a product
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Reviews retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PagedFeedbackResponse'
+
+  /feedback/product/{productId}/rating:
+    get:
+      tags: [Feedback]
+      summary: Get average rating
+      description: Returns average rating for a product
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Average rating retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: number
+                        format: double
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        '200':
+          description: API is running
+
+  /health/ping:
+    get:
+      tags: [Health]
+      summary: Detailed health status
+      responses:
+        '200':
+          description: System health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+        mobileNo:
+          type: string
+          maxLength: 20
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+          minLength: 6
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        mobileNo:
+          type: string
+        isVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateCategoryRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+
+    CategoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+        - categoryId
+        - price
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        categoryId:
+          type: integer
+        description:
+          type: string
+        price:
+          type: number
+          format: decimal
+          minimum: 0.01
+
+    UpdateProductRequest:
+      type: object
+      required:
+        - id
+        - name
+        - categoryId
+        - price
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          maxLength: 255
+        categoryId:
+          type: integer
+        description:
+          type: string
+        price:
+          type: number
+          format: decimal
+
+    ProductResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        categoryId:
+          type: integer
+        categoryName:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: decimal
+        vendorId:
+          type: integer
+        averageRating:
+          type: number
+          format: double
+        reviewCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateAddressRequest:
+      type: object
+      properties:
+        line1:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 100
+        pincode:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 100
+
+    AddressResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        line1:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        country:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - addressId
+        - items
+      properties:
+        addressId:
+          type: integer
+        arrivingTime:
+          type: string
+          format: date-time
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OrderItemRequest'
+
+    OrderItemRequest:
+      type: object
+      required:
+        - productId
+        - quantity
+      properties:
+        productId:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        addressId:
+          type: integer
+        arrivingTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [Pending, Shipped, Delivered, Cancelled]
+        totalAmount:
+          type: number
+          format: decimal
+        createdAt:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+
+    OrderItemResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        itemCount:
+          type: integer
+        purchasePrice:
+          type: number
+          format: decimal
+
+    UpdateOrderStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [Pending, Shipped, Delivered, Cancelled]
+
+    CreatePaymentRequest:
+      type: object
+      required:
+        - orderId
+        - paymentMode
+      properties:
+        orderId:
+          type: integer
+        paymentMode:
+          type: string
+          enum: [CashOnDelivery, UPI, NetBanking]
+
+    PaymentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        amount:
+          type: number
+          format: decimal
+        paymentMode:
+          type: string
+        status:
+          type: string
+        transactionId:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateFeedbackRequest:
+      type: object
+      required:
+        - productId
+        - rating
+      properties:
+        productId:
+          type: integer
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        review:
+          type: string
+          maxLength: 1000
+
+    FeedbackResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        userId:
+          type: integer
+        rating:
+          type: integer
+        review:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PagedProductResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        totalPages:
+          type: integer
+        hasPreviousPage:
+          type: boolean
+        hasNextPage:
+          type: boolean
+
+    PagedOrderResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResponse'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        totalPages:
+          type: integer
+        hasPreviousPage:
+          type: boolean
+        hasNextPage:
+          type: boolean
+
+    PagedFeedbackResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedbackResponse'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        totalPages:
+          type: integer
+        hasPreviousPage:
+          type: boolean
+        hasNextPage:
+          type: boolean
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            message: Validation failed
+            errors: ["Email is required", "Password must be at least 6 characters"]
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            message: Invalid email or password
+
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            message: You do not have permission to perform this action
+
+    NotFound:
+      description: Not Found - Resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            message: Resource not found
